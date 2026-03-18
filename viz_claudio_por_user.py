@@ -1,0 +1,115 @@
+import pandas as pd
+import plotly.graph_objects as go
+from collections import defaultdict
+
+# ─── 1. CARGA DE DATOS ────────────────────────────────────────────────────────
+df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/flujo_de_usuarios_2026-03-16T12_45_35.308263613Z.csv")
+
+# ─── 2. CONSTRUIR SECUENCIAS POR USUARIO ──────────────────────────────────────
+# Ordenamos por chat_id (cronológico) y luego por posición dentro del chat
+# Así la secuencia de un usuario respeta el orden real de sus interacciones
+sequences = (
+    df.sort_values(["user_id", "chat_id", "posicion_en_el_chat"])
+    .groupby("user_id")["tool"]
+    .apply(list)
+    .reset_index()
+)
+
+# ─── 3. EXTRAER TRANSICIONES CON POSICIÓN ─────────────────────────────────────
+transition_counts = defaultdict(int)
+
+for _, row in sequences.iterrows():
+    tools = row["tool"]
+    for i in range(len(tools) - 1):
+        source_node = f"{tools[i]}  (paso {i+1})"
+        target_node = f"{tools[i+1]}  (paso {i+2})"
+        transition_counts[(source_node, target_node)] += 1
+
+# ─── 4. FILTRO ─────────────────────────────────────────────────────────────────
+MIN_USERS = 1000  # ahora representa usuarios únicos, no chats
+transition_counts = {k: v for k, v in transition_counts.items() if v >= MIN_USERS}
+
+# ─── 5. ARMAR NODOS Y LINKS ────────────────────────────────────────────────────
+all_nodes = list({node for pair in transition_counts for node in pair})
+node_index = {node: i for i, node in enumerate(all_nodes)}
+
+sources, targets, values = [], [], []
+for (src, tgt), count in transition_counts.items():
+    sources.append(node_index[src])
+    targets.append(node_index[tgt])
+    values.append(count)
+
+# ─── 6. PALETA DE COLORES ──────────────────────────────────────────────────────
+COLORS = {
+    "get_greetings": "#4C78A8",
+    "aftersale-greetings": "#72B7B2",
+    "get_city_country_information": "#8CD17D",
+    "get_inspiration_information": "#79AEC8",
+    "get_inspiration": "#A2C8EC",
+    "others": "#AAAAAA",
+    "get_general_info": "#BAB0AC",
+    "get_location_data": "#72B7B2",
+    "others_topic": "#C0C0C0",
+    "get_poi_information": "#54A24B",
+    "documentation-required": "#F0A500",
+    "bank_promos": "#F58518",
+    "get_entity": "#B279A2",
+    "clarify_destination_intent": "#9ECAE9",
+    "offers": "#FFD700",
+    "get_weather_information": "#6aaed6",
+    "contact_sale_assistant": "#D67195",
+    "others_topic_website": "#E8E8E8",
+    "flight-build-checkout-link": "#1A4E93",
+    "flight-search": "#3A6EA5",
+    "search_packages_on_destination": "#F58518",
+    "search_hotels_on_destination": "#54A24B",
+    "flight-price-trend": "#6aaed6",
+    "flight-deals": "#2A5EA5",
+    "create_trip": "#E8A838",
+}
+
+def get_color(node_label: str, alpha: float = 0.9) -> str:
+    base_tool = node_label.split("  (paso")[0]
+    c = COLORS.get(base_tool, "#666666")
+    r, g, b = int(c[1:3], 16), int(c[3:5], 16), int(c[5:7], 16)
+    return f"rgba({r},{g},{b},{alpha})"
+
+node_colors = [get_color(n) for n in all_nodes]
+link_colors = [get_color(all_nodes[s], 0.6) for s in sources]
+
+# ─── 7. CONSTRUIR FIGURA ───────────────────────────────────────────────────────
+total_usuarios = sequences.shape[0]
+
+fig = go.Figure(go.Sankey(
+    arrangement="freeform",
+    node=dict(
+        pad=20,
+        thickness=20,
+        line=dict(color="white", width=0.5),
+        label=all_nodes,
+        color=node_colors,
+        hovertemplate="<b>%{label}</b><br>Flujo total: %{value}<extra></extra>",
+    ),
+    link=dict(
+        source=sources,
+        target=targets,
+        value=values,
+        color=link_colors,
+        hovertemplate="<b>%{source.label}</b> → <b>%{target.label}</b><br>"
+                      "Usuarios: %{value}<extra></extra>",
+    ),
+))
+
+fig.update_layout(
+    title=dict(
+        text=f"Flujo de Tools por Usuario  ·  {total_usuarios:,} usuarios únicos analizados",
+        font=dict(size=20),
+    ),
+    font_size=13,
+    height=700,
+    paper_bgcolor="#F9F9F9",
+)
+
+# ─── 8. EXPORTAR A HTML ────────────────────────────────────────────────────────
+fig.write_html("sankey_tools_by_user.html", include_plotlyjs="cdn")
+print(f"✅ Guardado: sankey_tools_by_user.html  ({total_usuarios:,} usuarios)")

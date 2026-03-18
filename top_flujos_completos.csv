@@ -1,0 +1,11 @@
+flujo,cantidad_de_chats
+get_greetings,371064
+get_city_country_information,24107
+get_greetings → get_city_country_information,23271
+others,19498
+get_greetings → get_inspiration_information,19288
+get_inspiration_information,11871
+get_greetings → others,10869
+get_city_country_information → get_city_country_information,5316
+get_greetings → get_city_country_information → get_city_country_information,4637
+get_inspiration_information → get_city_country_information,3524
