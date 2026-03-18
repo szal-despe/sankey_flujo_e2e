@@ -5,13 +5,12 @@ from collections import defaultdict
 # ─── 1. CARGA DE DATOS ────────────────────────────────────────────────────────
 df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/flujo_de_usuarios_x_topics_2026-03-17T14_45_27.818040089Z.csv")
 
-# ─── PARÁMETROS DE FOCO ────────────────────────────────────────────────────────
-# Filtrá chats cuya secuencia empiece exactamente con estos pasos.
-# Poné None para no filtrar ese paso.
+# ─── PARÁMETROS ────────────────────────────────────────────────────────
+# "None" para no filtrar por tools especificas
 FOCO_PASO_1 = "get_greetings"                
-FOCO_PASO_2 = "get_inspiration_information_inspiration_description" 
+FOCO_PASO_2 = "get_city_country_information_points_of_interest" 
 MAX_PASOS = 6  # ← acá controlás la longitud horizontal del Sankey
-MIN_CHATS = 100
+MIN_CHATS = 50
 
 # ─── 2. CONSTRUIR SECUENCIAS POR CHAT ─────────────────────────────────────────
 sequences = (
@@ -40,7 +39,7 @@ print(f"Chats después del filtro: {total_filtrado:,}  ({100 * total_filtrado / 
 
 # ─── 4. EXTRAER TRANSICIONES CON POSICIÓN ─────────────────────────────────────
 
-transition_counts = defaultdict(int)  # ← esta línea faltó en el snippet
+transition_counts = defaultdict(int)  
 
 for _, row in sequences.iterrows():
     tools = row["tool_topic"][:MAX_PASOS]
@@ -48,11 +47,13 @@ for _, row in sequences.iterrows():
         source_node = f"{tools[i]}  (paso {i+1})"
         target_node = f"{tools[i+1]}  (paso {i+2})"
         transition_counts[(source_node, target_node)] += 1
+
 # ─── 5. FILTRO DE DENSIDAD ─────────────────────────────────────────────────────
 
 transition_counts = {k: v for k, v in transition_counts.items() if v >= MIN_CHATS}
 
 # ─── 6. ARMAR NODOS Y LINKS ────────────────────────────────────────────────────
+
 all_nodes = list({node for pair in transition_counts for node in pair})
 node_index = {node: i for i, node in enumerate(all_nodes)}
 
@@ -100,20 +101,21 @@ def get_color(node_label: str, alpha: float = 0.9) -> str:
 node_colors = [get_color(n) for n in all_nodes]
 link_colors = [get_color(all_nodes[s], 0.6) for s in sources]
 
-# ─── 8. TÍTULO Y NOMBRE DE ARCHIVO DINÁMICOS ───────────────────────────────────
+# ─── 8. TÍTULO Y NOMBRE DE ARCHIVO ───────────────────────────────────
+
 focos_activos = [p for p in [FOCO_PASO_1, FOCO_PASO_2] if p is not None]
 
 if focos_activos:
     foco_str = " → ".join(focos_activos)
     titulo = f"Flujo de Topics · Foco: {foco_str}  ·  {total_filtrado:,} chats"
-    # Nombre de archivo: reemplaza caracteres problemáticos para nombres de archivo
     foco_filename = "_".join(focos_activos).replace("-", "_")
     output_filename = f"sankey_topics_{foco_filename}.html"
 else:
     titulo = f"Flujo de Topics por Conversación  ·  {total_filtrado:,} chats"
     output_filename = "sankey_topics_claudio.html"
 
-# ─── 9. CONSTRUIR FIGURA ───────────────────────────────────────────────────────
+# ─── 9. CONSTRUIR SANKEY ───────────────────────────────────────────────────────
+
 fig = go.Figure(go.Sankey(
     arrangement="freeform",
     node=dict(
@@ -142,5 +144,6 @@ fig.update_layout(
 )
 
 # ─── 10. EXPORTAR A HTML ───────────────────────────────────────────────────────
+
 fig.write_html(output_filename, include_plotlyjs="cdn")
 print(f"✅ Guardado: {output_filename}")
