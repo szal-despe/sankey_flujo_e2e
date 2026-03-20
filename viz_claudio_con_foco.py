@@ -3,14 +3,14 @@ import plotly.graph_objects as go
 from collections import defaultdict
 
 # ─── 1. CARGA DE DATOS ────────────────────────────────────────────────────────
-df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/flujo_de_usuarios_x_topics_2026-03-17T14_45_27.818040089Z.csv")
+df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/flujo_de_usuarios_x_topics_x_segmento_2026-03-19T20_11_27.404266061Z.csv")
 
 # ─── PARÁMETROS ────────────────────────────────────────────────────────
-# "None" para no filtrar por tools especificas
-FOCO_PASO_1 = "get_greetings"                
-FOCO_PASO_2 = "get_city_country_information_points_of_interest" 
-MAX_PASOS = 6  # ← acá controlás la longitud horizontal del Sankey
-MIN_CHATS = 50
+# None para no filtrar por tools especificas
+FOCO_PASO_1 = 'get_greeting'             
+FOCO_PASO_2 = 'get_city_country_information_photos'
+MIN_CHATS = 10
+MAX_PASOS = 6
 
 # ─── 2. CONSTRUIR SECUENCIAS POR CHAT ─────────────────────────────────────────
 sequences = (
@@ -109,10 +109,10 @@ if focos_activos:
     foco_str = " → ".join(focos_activos)
     titulo = f"Flujo de Topics · Foco: {foco_str}  ·  {total_filtrado:,} chats"
     foco_filename = "_".join(focos_activos).replace("-", "_")
-    output_filename = f"sankey_topics_{foco_filename}.html"
+    output_filename = f"sankey_topics_{foco_filename}_segmento.html"
 else:
     titulo = f"Flujo de Topics por Conversación  ·  {total_filtrado:,} chats"
-    output_filename = "sankey_topics_claudio.html"
+    output_filename = "sankey_topics_claudio_segmento.html"
 
 # ─── 9. CONSTRUIR SANKEY ───────────────────────────────────────────────────────
 

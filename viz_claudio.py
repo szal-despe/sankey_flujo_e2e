@@ -4,7 +4,7 @@ from collections import defaultdict
 
 # ─── 1. CARGA DE DATOS ────────────────────────────────────────────────────────
 # Reemplazá esto con tu forma de leer (CSV, SQL, etc.)
-df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/flujo_de_usuarios_x_topics_2026-03-17T14_45_27.818040089Z.csv")
+df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/query_result_2026-03-18T20_05_18.841158315Z.csv")
 # Columnas esperadas: user_id | chat_id | tool | posicion_en_el_chat
 
 # ─── 2. CONSTRUIR SECUENCIAS POR CHAT ─────────────────────────────────────────
@@ -31,7 +31,7 @@ for _, row in sequences.iterrows():
 
 # ─── 4. FILTRO OPCIONAL: quedarse con las transiciones más frecuentes ──────────
 # Útil si tenés muchas tools y el grafico queda muy denso
-MIN_CHATS = 500  # mostrá solo transiciones que ocurren en al menos N chats
+MIN_CHATS = 1000  # mostrá solo transiciones que ocurren en al menos N chats
 transition_counts = {k: v for k, v in transition_counts.items() if v >= MIN_CHATS}
 
 # ─── 5. ARMAR NODOS Y LINKS PARA PLOTLY ───────────────────────────────────────
