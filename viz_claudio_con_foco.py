@@ -7,8 +7,8 @@ df = pd.read_csv("C:/Users/santiago.zalazar/Downloads/flujo_de_usuarios_x_topics
 
 # ─── PARÁMETROS ────────────────────────────────────────────────────────
 # None para no filtrar por tools especificas
-FOCO_PASO_1 = 'get_greeting'             
-FOCO_PASO_2 = 'get_city_country_information_photos'
+FOCO_PASO_1 = None           
+FOCO_PASO_2 = None
 MIN_CHATS = 10
 MAX_PASOS = 6
 
